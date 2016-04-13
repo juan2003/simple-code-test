@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head><title>Bands</title></head>
+<body>
+<script>
+	function xhrCallback() {
+		if ( this.readyState == 4 ){
+			listMusicians(JSON.parse(this.responseText));
+		}
+	}
+
+	function loadData() {
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = xhrCallback;
+		xhr.open('GET', './musicians.json', true);
+		xhr.send();
+	}
+
+	function camelCase(string) {
+		return string.replace(/[^a-z][a-z]/gi, function(lower) { return lower[1].toUpperCase(); }); 
+	}
+
+	function createTable (objectList) {
+		var table = {}, row, field;
+		for( var i=0, j=objectList.length; i<j; i++ ){
+			row = {};
+			for(field in objectList[i]){
+				row[camelCase(field)] = objectList[i][field];
+			}
+			table[objectList[i].id] = row;
+		}
+		return table;
+	}
+
+	function writeOutput(template, data) {
+		var el = document.createElement('pre'), i,
+			tokenResolver = function(token) {
+				var t = token.substr(1, token.length-2);
+				return data[i][t]
+			};
+		for(i in data){
+			el.appendChild(document.createTextNode(template.replace(/{\w+}/g, tokenResolver)));
+		}
+		document.body.appendChild(el);
+	}
+
+	function listMusicians(data) {
+		var bands = createTable(data.Bands),
+			musicians = createTable(data.Musicians);
+		for(id in musicians) {
+			musicians[id].bandName = bands[musicians[id].band].name;
+		}
+		writeOutput("* {firstName} {lastName} - {bandName}\n", musicians);
+	}
+	
+	loadData();
+</script>
+</body>
+</html>
